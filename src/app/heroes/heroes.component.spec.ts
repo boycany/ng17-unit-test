@@ -5,6 +5,8 @@ import { HeroesComponent } from './heroes.component';
 import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Hero } from '../hero';
+import { By } from '@angular/platform-browser';
+import { HeroComponent } from '../hero/hero.component';
 
 describe('HeroesComponent', () => {
   /** Isolated test */
@@ -15,13 +17,14 @@ describe('HeroesComponent', () => {
   /** shallow integration test */
   let fixture: ComponentFixture<HeroesComponent>;
 
-  @Component({
-    selector: 'app-hero',
-    template: '<div></div>',
-  })
-  class FakeHeroComponent {
-    @Input() hero: Hero;
-  }
+  /** Shallow Integartioin test: Uses fake component */
+  // @Component({
+  //   selector: 'app-hero',
+  //   template: '<div></div>',
+  // })
+  // class FakeHeroComponent {
+  //   @Input() hero: Hero;
+  // }
 
   beforeEach(() => {
     HEROES = [
@@ -49,25 +52,52 @@ describe('HeroesComponent', () => {
     ]);
 
     TestBed.configureTestingModule({
-      declarations: [HeroesComponent, FakeHeroComponent],
+      declarations: [
+        HeroesComponent,
+        HeroComponent /** Deep Integration Test: declare real Hero Component */,
+        // FakeHeroComponent
+      ],
       providers: [
         {
           provide: HeroService,
           useValue: mockHeroService,
         },
       ],
-      // schemas: [NO_ERRORS_SCHEMA],
+      schemas: [NO_ERRORS_SCHEMA],
     });
+
     fixture = TestBed.createComponent(HeroesComponent);
 
     // component = new HeroesComponent(mockHeroService);
   });
 
-  it('should set Heroes correctly from the service', () => {
+  it('should render each hero as a HeroComponent', () => {
     mockHeroService.getHeroes.and.returnValue(of(HEROES));
+
+    /** run ngOnInit */
     fixture.detectChanges();
-    expect(fixture.componentInstance.heroes.length).toBe(3);
+
+    const directive = By.directive(HeroComponent);
+    // console.log('directive :>> ', directive);
+    const heroComponentsDEls = fixture.debugElement.queryAll(directive);
+    console.log('heroComponents :>> ', heroComponentsDEls);
+
+    expect(heroComponentsDEls.length).toEqual(3);
+    // expect(heroComponentsDEls[0].componentInstance.hero.name).toEqual(
+    //   'SpiderDude'
+    // );
+    for (let i = 0; i < heroComponentsDEls.length; i++) {
+      expect(heroComponentsDEls[i].componentInstance.hero).toEqual(HEROES[i]);
+    }
   });
+
+  // it('should set Heroes correctly from the service', () => {
+  //   expect(fixture.componentInstance.heroes.length).toBe(3);
+  // });
+
+  // it('should create one li for each hero', () => {
+  //   expect(fixture.debugElement.queryAll(By.css('li')).length).toBe(3);
+  // });
 
   // describe('delete', () => {
   //   beforeEach(() => {
